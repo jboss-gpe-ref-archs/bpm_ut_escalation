@@ -297,14 +297,15 @@ In order to test user task notification we need to replace the contents of the d
 
 . ssh into the `bpmsapp` gear, and cd to `bpms/standalone/deployments/business-central.war/WEB-INF/classes/`
 . Open the `userinfo.properties` file with vi or nano.
-. Replace the contents of the filewith the following entries - replace `user@domain.org` with suitable email addresses:
+. Replace the contents of the file with the following entries - replace `user@domain.org` with suitable email addresses:
 +
 ----
 user10=user@domain.org:en-UK:user10
 user11=user@domain.org:en-UK:user11
 user20=user@domain.org:en-UK:user20
 user21=user@domain.org:en-UK:user21
-user30=user@domain.org:en-UK:user31
+user30=user@domain.org:en-UK:user30
+user31=user@domain.org:en-UK:user31
 busadmin=user@domain.org:en-UK:busadmin
 group1=:en-UK:group1:[user10,user11]
 group2=:en-UK:group2:[user20,user21]
