@@ -1,0 +1,278 @@
+:data-uri:
+:toc2:
+:bpmproduct: link:https://access.redhat.com/site/documentation/en-US/Red_Hat_JBoss_BPM_Suite/[Red Hat's BPM Suite 6 product]
+:mwlaboverviewsetup: link:http://people.redhat.com/jbride/labsCommon/setup.html[Middleware Lab Overview and Set-up]
+
+image::images/rhheader.png[width=900]
+
+:numbered!:
+[abstract]
+== BPM Suite Persistent Timer setup
+
+:numbered:
+
+Task escalation relies heavily on timers to provide its functionality. Out of the box BPM Suite is configured with a JVM based timer configuration. This means that timer definitions won't survive a server restart. BPM Suite can also be configured to use a persistent timer mechanism, based on the well-known link:http://http://quartz-scheduler.org/[Quartz scheduling framework]. 
+
+Configuration of BPM Suite 6 to use Quartz based timers is done by setting an environment variable `org.quartz.properties` whose value points to a Quartz configuration file.
+
+The BPM Suite cartridge in the Partner Demo system is configured to use the Quartz based timer configuration, but uses a RAM based persistence store, which is also volatile in nature.
+
+If you want to upgrade to a JDBC based persistence store, these are the steps to do:
+
+. Create a Quartz properties file for JDBC persistence
+.. ssh into the bpmsapp gear, and cd to `app-root/data`.
+.. create a new Quartz properties file
++
+----
+$ touch quartz-jdbc.properties
+$ chmod 644 quartz-jdbc.properties
+----
++  
+.. open the `quartz-jdbc.properties` file in `vi` or `nano`, and paste the contents hereunder in the file:
++
+----
+#============================================================================
+# Configure Main Scheduler Properties
+#============================================================================
+
+org.quartz.scheduler.instanceName = jBPMScheduler
+org.quartz.scheduler.instanceId = NON_CLUSTERED
+
+#============================================================================
+# Configure ThreadPool
+#============================================================================
+
+org.quartz.threadPool.class = org.quartz.simpl.SimpleThreadPool
+org.quartz.threadPool.threadCount = 5
+org.quartz.threadPool.threadPriority = 5
+
+#============================================================================
+# Configure JobStore
+#============================================================================
+
+org.quartz.jobStore.misfireThreshold = 60000
+
+org.quartz.jobStore.class=org.quartz.impl.jdbcjobstore.JobStoreCMT
+org.quartz.jobStore.driverDelegateClass=org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+org.quartz.jobStore.useProperties=false
+org.quartz.jobStore.dataSource=managedDS
+org.quartz.jobStore.nonManagedTXDataSource=notManagedDS
+org.quartz.jobStore.tablePrefix=QRTZ_
+org.quartz.jobStore.isClustered=false
+org.quartz.jobStore.clusterCheckinInterval = 20000
+
+#============================================================================
+# Configure Datasources
+#============================================================================
+org.quartz.dataSource.managedDS.jndiURL=jboss/datasources/ExampleDS
+org.quartz.dataSource.notManagedDS.jndiURL=jboss/datasources/ExampleDS-quartz
+----
++
+.. Save and quit.
+. Configure the `org.quartz.properties` environment variable to point to the newly created Quartz properties file:
+.. ssh into the `bpmsapp` gear, and cd to `bpms/standalone/configuration`.
+.. Open `standalone.xml` in vi or nano, and change the `org.quartz.properties` definition (around line 52) to the following value:
++
+----
+<property name="org.quartz.properties" value="${env.OPENSHIFT_DATA_DIR}/quartz-jdbc.properties"/>
+----
++
+.. Save and quit.
+. Create a new non-managed DataSource for Quartz
+.. ssh into the `bpmsapp` gear, and cd to `bpms/standalone/configuration`.
+.. Open `standalone.xml` in vi or nano, and paste the following datasource definition under the existing `ExampleDS` datasource definition (around line 136):
++
+----
+<datasource jta="false" jndi-name="java:jboss/datasources/ExampleDS-quartz" pool-name="ExampleDS-quartz" enabled="true">
+    <connection-url>jdbc:mysql://${env.OPENSHIFT_MYSQL_DB_HOST}:3306/jbpm</connection-url>
+    <driver-class>com.mysql.jdbc.Driver</driver-class>
+    <driver>mysql</driver>
+    <new-connection-sql>select 1</new-connection-sql>
+    <pool>
+        <min-pool-size>1</min-pool-size>
+        <max-pool-size>5</max-pool-size>
+    </pool>
+    <security>
+        <user-name>${env.OPENSHIFT_MYSQL_DB_USERNAME}</user-name>
+        <password>${env.OPENSHIFT_MYSQL_DB_PASSWORD}</password>
+    </security>
+</datasource>
+----
+..Save and quit.
+. Add the Quartz tables to the MySQL database
+.. ssh into the `bpmsapp` gear, and cd to `app-root/data`.
+.. create a new MySQL DDL file called mysql-quartz.
++
+----
+$ touch mysql-quartz.sql
+----
++
+.. open the `mysql-quartz.sql` file in `vi` or `nano`, and paste the contents hereunder in the file: 
++
+----
+CREATE TABLE QRTZ_JOB_DETAILS
+  (
+    JOB_NAME  VARCHAR(200) NOT NULL,
+    JOB_GROUP VARCHAR(200) NOT NULL,
+    DESCRIPTION VARCHAR(250) NULL,
+    JOB_CLASS_NAME   VARCHAR(250) NOT NULL,
+    IS_DURABLE VARCHAR(1) NOT NULL,
+    IS_VOLATILE VARCHAR(1) NOT NULL,
+    IS_STATEFUL VARCHAR(1) NOT NULL,
+    REQUESTS_RECOVERY VARCHAR(1) NOT NULL,
+    JOB_DATA BLOB NULL,
+    PRIMARY KEY (JOB_NAME,JOB_GROUP)
+);
+
+CREATE TABLE QRTZ_JOB_LISTENERS
+  (
+    JOB_NAME  VARCHAR(200) NOT NULL,
+    JOB_GROUP VARCHAR(200) NOT NULL,
+    JOB_LISTENER VARCHAR(200) NOT NULL,
+    PRIMARY KEY (JOB_NAME,JOB_GROUP,JOB_LISTENER),
+    FOREIGN KEY (JOB_NAME,JOB_GROUP)
+        REFERENCES QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)
+);
+
+CREATE TABLE QRTZ_TRIGGERS
+  (
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    JOB_NAME  VARCHAR(200) NOT NULL,
+    JOB_GROUP VARCHAR(200) NOT NULL,
+    IS_VOLATILE VARCHAR(1) NOT NULL,
+    DESCRIPTION VARCHAR(250) NULL,
+    NEXT_FIRE_TIME BIGINT(13) NULL,
+    PREV_FIRE_TIME BIGINT(13) NULL,
+    PRIORITY INTEGER NULL,
+    TRIGGER_STATE VARCHAR(16) NOT NULL,
+    TRIGGER_TYPE VARCHAR(8) NOT NULL,
+    START_TIME BIGINT(13) NOT NULL,
+    END_TIME BIGINT(13) NULL,
+    CALENDAR_NAME VARCHAR(200) NULL,
+    MISFIRE_INSTR SMALLINT(2) NULL,
+    JOB_DATA BLOB NULL,
+    PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (JOB_NAME,JOB_GROUP)
+        REFERENCES QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)
+);
+
+CREATE TABLE QRTZ_SIMPLE_TRIGGERS
+  (
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    REPEAT_COUNT BIGINT(7) NOT NULL,
+    REPEAT_INTERVAL BIGINT(12) NOT NULL,
+    TIMES_TRIGGERED BIGINT(10) NOT NULL,
+    PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP)
+        REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+CREATE TABLE QRTZ_CRON_TRIGGERS
+  (
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    CRON_EXPRESSION VARCHAR(200) NOT NULL,
+    TIME_ZONE_ID VARCHAR(80),
+    PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP)
+        REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+CREATE TABLE QRTZ_BLOB_TRIGGERS
+  (
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    BLOB_DATA BLOB NULL,
+    PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP),
+    FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP)
+        REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+CREATE TABLE QRTZ_TRIGGER_LISTENERS
+  (
+    TRIGGER_NAME  VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    TRIGGER_LISTENER VARCHAR(200) NOT NULL,
+    PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP,TRIGGER_LISTENER),
+    FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP)
+        REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)
+);
+
+
+CREATE TABLE QRTZ_CALENDARS
+  (
+    CALENDAR_NAME  VARCHAR(200) NOT NULL,
+    CALENDAR BLOB NOT NULL,
+    PRIMARY KEY (CALENDAR_NAME)
+);
+
+
+
+CREATE TABLE QRTZ_PAUSED_TRIGGER_GRPS
+  (
+    TRIGGER_GROUP  VARCHAR(200) NOT NULL, 
+    PRIMARY KEY (TRIGGER_GROUP)
+);
+
+CREATE TABLE QRTZ_FIRED_TRIGGERS
+  (
+    ENTRY_ID VARCHAR(95) NOT NULL,
+    TRIGGER_NAME VARCHAR(200) NOT NULL,
+    TRIGGER_GROUP VARCHAR(200) NOT NULL,
+    IS_VOLATILE VARCHAR(1) NOT NULL,
+    INSTANCE_NAME VARCHAR(200) NOT NULL,
+    FIRED_TIME BIGINT(13) NOT NULL,
+    PRIORITY INTEGER NOT NULL,
+    STATE VARCHAR(16) NOT NULL,
+    JOB_NAME VARCHAR(200) NULL,
+    JOB_GROUP VARCHAR(200) NULL,
+    IS_STATEFUL VARCHAR(1) NULL,
+    REQUESTS_RECOVERY VARCHAR(1) NULL,
+    PRIMARY KEY (ENTRY_ID)
+);
+
+CREATE TABLE QRTZ_SCHEDULER_STATE
+  (
+    INSTANCE_NAME VARCHAR(200) NOT NULL,
+    LAST_CHECKIN_TIME BIGINT(13) NOT NULL,
+    CHECKIN_INTERVAL BIGINT(13) NOT NULL,
+    PRIMARY KEY (INSTANCE_NAME)
+);
+
+CREATE TABLE QRTZ_LOCKS
+  (
+    LOCK_NAME  VARCHAR(40) NOT NULL, 
+    PRIMARY KEY (LOCK_NAME)
+);
+
+
+INSERT INTO QRTZ_LOCKS values('TRIGGER_ACCESS');
+INSERT INTO QRTZ_LOCKS values('JOB_ACCESS');
+INSERT INTO QRTZ_LOCKS values('CALENDAR_ACCESS');
+INSERT INTO QRTZ_LOCKS values('STATE_ACCESS');
+INSERT INTO QRTZ_LOCKS values('MISFIRE_ACCESS');
+
+
+commit;
+----
++
+.. Save and quit
+.. Add the tables to MySQL with the following command:
++
+----
+$ mysql jbpm < mysql-quartz.sql
+----
++
+Note: if you get an error `ERROR 1050 (42S01) at line 1: Table 'QRTZ_JOB_DETAILS' already exists`, it means the Quartz tables were created as part of the cartridge definition, and you can ignore the error.
+
+. The `bpmsapp` cartridge need to be restarted for the changes to take effect
+.. ssh into the `bpmsapp` gear.
+.. Issue the following commands:
++
+----
+$ gear stop
+$ gear start
+----
+

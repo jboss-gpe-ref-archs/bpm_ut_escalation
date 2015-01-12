@@ -1,0 +1,13 @@
+:data-uri:
+:toc2:
+:bpm_ut_escalation: link:doc/bpm_ut_escalation.adoc[BPM Suite User Task Escalation]
+
+image::doc/images/rhheader.png[width=900]
+
+:numbered!:
+
+== PURPOSE:
+
+. *{bpm_ut_escalation}*
++
+Provides a deep dive in BPM Suite 6 User Task Escalation - reassignment and notification.
