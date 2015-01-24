@@ -15,7 +15,7 @@ image::images/rhheader.png[width=900]
 
 Please note that the terms _User Task_ and _Human Task_ are both used to denote tasks in processes to be performed by human actors. In this document we will predominantly use the term _User Task_.
 
-An important aspect of business processes is human task management. While some of the work performed in a process can be executed automatically, some tasks need to be executed by human actors. 
+An important aspect of business processes is human task management. While some of the work performed in a process can be executed automatically, some tasks need to be executed by human actors.
 
 BPM Suite 6 supports a User Task node inside processes for modeling this interaction with human actors. This User Task node allows process designers to define the properties related to the task that the human actor needs to execute, like for example the type of task, the (potential) owners, or the data associated with the task.
 
@@ -39,11 +39,11 @@ Escalations come in two forms:
 
 * Task Reassignment : used to replace the potential owners of a task when an escalation is triggered. The new potential owners my represent individual users or groups, or a combination of both. The task is set to status _Ready_ after reassignment.
 
-A task may have multiple start deadlines and completion deadlines associated with it. Deadlines will only be executed as long as the escalation conditions (i.e. the state of the task when the escalation triggers) are met. 
+A task may have multiple start deadlines and completion deadlines associated with it. Deadlines will only be executed as long as the escalation conditions (i.e. the state of the task when the escalation triggers) are met.
 
 === Configuring User Task Escalation
 
-In the BPMS Web designer, escalation (reassignment as well as notification) can be configured using dialog boxes from within the User Task properties. 
+In the BPMS Web designer, escalation (reassignment as well as notification) can be configured using dialog boxes from within the User Task properties.
 
 ==== Reassignment
 
@@ -53,11 +53,11 @@ image::images/designer-reassignment-1.png[width="800"]
 
 In the dialog box, click on the _Add Reassignment_ button to enter a new reassignment, and fill in the desired values for user, group, expiry time and type (_Not Started_ or _Not Completed_).
 
-image::images/designer-reassignment-2.png[width="800"]  
+image::images/designer-reassignment-2.png[width="800"]
 
 Some things to note:
 
-* Reassignment can be done to a particular user, a group of users or a combination of the two. 
+* Reassignment can be done to a particular user, a group of users or a combination of the two.
 * Multiple users and/or groups can be specified with a comma separated list of user names an/or group names
 * The expiry delay is specified according to the following regular expression : `([+-])?((\\d+)[Dd])?\\s*((\\d+)[Hh])?\\s*((\\d+)[Mm])?\\s*((\\d+)[Ss])?\\s*((\\d+)([Mm][Ss])?)?`. +
 Some examples:
@@ -68,33 +68,33 @@ Some examples:
 * Multiple expiration delays can be specified with a comma separated list.
 * Implementation detail : the configured escalation is passed to the User Task instance through predefined data input variables, named _NotStartedReassign_ and _NotCompletedReassign_ (_NotStartedNotify_ and _NotCompletedNotify_ for notifications). The data input variable takes a format `[users:<comma separated list of users>|groups:<comma separated list of groups>]@[<escalation expiry time>]`. If multiple escalations need to be defined, they should be separated by the `^` symbol.  +
 Using the input variables directly allows to define escalations on User Tasks in e.g. the Eclipse based BPMN2 designer, which has no UI to define escalations on a User Task.
-* _Variable substitution_ : for a more dynamic reassignment logic, expressions can be used instead of hardcoded values for users, groups and expiry delay. + 
+* _Variable substitution_ : for a more dynamic reassignment logic, expressions can be used instead of hardcoded values for users, groups and expiry delay. +
 At runtime (when the User task instance is created) the expressions will be resolved to process variables +
-Example : `[users:#{reassignWhenNotStarted}|groups:]@[#{reassignWhenNotStartedTime}]` 
+Example : `[users:#{reassignWhenNotStarted}|groups:]@[#{reassignWhenNotStartedTime}]`
 
 ==== Notification
 
 By default in BPMS, notification escalation is handled through email, and as such requires more configuration than for reassignment. The setup required for BPMS in order to be able to send email will be discussed in the section about _Config and Deploymnent_
 
-To configure a notification escalation on a User task, in the BPMS Web designer select the User Task, and in the properties pane on the left, select the Notifications box. 
+To configure a notification escalation on a User task, in the BPMS Web designer select the User Task, and in the properties pane on the left, select the Notifications box.
 
 image::images/designer-notification-1.png[width="800"]
 
 In the dialog box, click on the _Add Notification_ button to enter a new notification, and fill in the desired values for type (_Not Started_ or _Not Completed_), expiry delay, from, to (users and/or groups), reply to, subject and body.
 
-image::images/designer-notification-2.png[width="800"]  
+image::images/designer-notification-2.png[width="800"]
 
 Some things to note:
 
 * Mandatory fields are _To Users_ and/or _To Groups_, _Type_ and _Expiry_. You probably need a subject and a body for the email. _From_ and _Reply To_ are optional. +
-(if _From_ is not set as part of the notification definition, it should be set a spart of the mail subsystem configuration, see below). 
+(if _From_ is not set as part of the notification definition, it should be set a spart of the mail subsystem configuration, see below).
 * The expiry delay is specified in the same way as for reassignments.
 * Multiple users and/or groups can be specified with a comma separated list of user names an/or group names.
 * Implementation detail : the configured escalation is passed to the User Task instance through a predefined data input variables, named _NotStartedNotify_ and _NotCompletedNotify_. The data input variable takes a format `[from:<from user>|tousers:<comma separated list of users>|togroups:<comma separated list of groups>|replyTo:<>replyto user|subject:<subject>|body:<body>]@[<escalation expiry time>]`. If multiple escalations need to be defined, they should be separated by the `^` symbol.  +
 Using the input variables directly allows to define escalations on User Tasks in e.g. the Eclipse based BPMN2 designer, which has no UI to define escalations on a User Task.
 * _Variable substitution_ : expressions can be used instead of hard coded values in the notification string. +
 At runtime (when the User task instance is created) the expressions will be resolved to process variables +
-Example : `[from:|tousers:#{notifyUsers}|groups:|replyTo:|subject:#{notifySubject}|body:#{notifyBody}]@[#{notifyWhenNotStartedTime}]` 
+Example : `[from:|tousers:#{notifyUsers}|groups:|replyTo:|subject:#{notifySubject}|body:#{notifyBody}]@[#{notifyWhenNotStartedTime}]`
 * _Templating_ : for the subject and the body of the notification email, a templating mechanism (_MVEL templating_) is used. This allows to inject task specific data in the subject and or header of the email.
 ** To inject a value in the subject or body, use a `${<variable name>}` expression in the subject or body string.
 ** The following variables are available:
@@ -105,7 +105,7 @@ Example : `[from:|tousers:#{notifyUsers}|groups:|replyTo:|subject:#{notifySubjec
 *** owners : the list of potential owners for this task
 *** doc : the content of the task, in the form of a map of task variables names and values. To access a particular item in the map, use `${doc["<task variable name>"]}`
 ** More details about MVEL templating can be found link:http://mvel.codehaus.org/MVEL+2.0+Templating+Guide[here].
-* In BPMS, users and groups are abstract entities. User and group details like email address, group membership etc are not maintained inside BPMS, but rather in an external system (typically in an LDAP directory). BPMS provides a pluggable mechanism to obtain the user information from where it is maintained. 
+* In BPMS, users and groups are abstract entities. User and group details like email address, group membership etc are not maintained inside BPMS, but rather in an external system (typically in an LDAP directory). BPMS provides a pluggable mechanism to obtain the user information from where it is maintained.
 
 == Prerequisites
 
@@ -137,13 +137,18 @@ Using your `OPENTLC-SSO` credentials, a connection to `broker00.ose.opentlc.com`
 Since you have already created a domain from the previous introductory lab, the workflow for creation of a new application will be slightly different than what you are used to.
 In particular, the OSE plugin will not prompt you for the creation of a new domain.
 
-. The following `New or existing OpenShift Application` pop-up should appear:
+. A popup entitled: `New or existing OpenShift Application` should appear:
 +
-image::images/new_OSE_app_bpm.png[]
+Populated its fields as follows:
 
 .. In the `Name` text box, enter: `bpmsapp`
 .. From the `Type` drop-down, select: JBoss BPMS 6.0 (rhgpe-bpms-6.0)
 .. From the `Gear profile` drop-down, select: pds_medium
+.. Click `Add` button in the `Embedded Cartridges` section.
++
+Select `MySQL 5.5` and press `OK`
++
+image::images/populated_new_ose_app.png[width="60%"]
 . Click `Next`
 . A new dialogue appears entitled `Set up Project for new OpenShift Aplication`.
 +
@@ -151,7 +156,7 @@ Check the check box for `Disable automatic maven build when pushing to OpenShift
 Afterwards, Click `Next`.
 
 . A new dialogue appears entitled `Import an existing OpenShift application`.
-+
++70
 Even though it will not be used, you will be forced to clone the remote git enabled project associated with your new OpenShift application.
 Select a location on your local filesystem where the git enabled project should be cloned to.
 +
@@ -177,7 +182,7 @@ image::images/newbpmlogfile.png[]
 
 === BPM Suite 6: Add additional users and roles
 
-By default in BPMS, users and roles are defined in a properties file. The BPM Suite 6 OSE installation defines one user, _jboss/brms_, but to demonstrate User Task escalations we need to add additional users and groups. 
+By default in BPMS, users and roles are defined in a properties file. The BPM Suite 6 OSE installation defines one user, _jboss/brms_, but to demonstrate User Task escalations we need to add additional users and groups.
 
 BPM Suite 6 provides a command-line tool (`bin/add-users.sh`) to add users and groups, but this command line tool is not installed as part of the BPM Suite 6 cartridge, so we will add them directly to the properties file.
 
@@ -193,7 +198,7 @@ user: user31, password: user31@@, roles: user, group3
 user: busadmin, password busadmin1@@, roles: user, Administrators
 ----
 
-. Using the `Remote System Explorer` perspective of JBDS, open an SSH terminal, and cd to `bpms/standalone/configuration`. 
+. Using the `Remote System Explorer` perspective of JBDS, open an SSH terminal, and cd to `bpms/standalone/configuration`.
 
 . Open the `application-users.properties` file with `vi` or `nano`, and append the following lines to the end of the file:
 +
@@ -223,17 +228,17 @@ busadmin=user,Administrators
 +
 Save the change and quit
 
-Verify the changes by logging in into the BPM Console using the username/password combinations of the newly created users. 
+Verify the changes by logging in into the BPM Console using the username/password combinations of the newly created users.
 
 === BPM Suite 6 : Persistent timer setup
 
-Task escalation relies heavily on timers to provide its functionality. Out of the box BPM Suite is configured with a JVM based timer configuration. This means that timer definitions won't survive a server restart. BPM Suite can also be configured to use a persistent timer mechanism, based on the well-known link:http://http://quartz-scheduler.org/[Quartz scheduling framework]. 
+Task escalation relies heavily on timers to provide its functionality. Out of the box BPM Suite is configured with a JVM based timer configuration. This means that timer definitions won't survive a server restart. BPM Suite can also be configured to use a persistent timer mechanism, based on the well-known link:http://http://quartz-scheduler.org/[Quartz scheduling framework].
 
 Configuration of BPM Suite 6 to use Quartz based timers is done by setting an environment variable `org.quartz.properties` whose value points to a Quartz configuration file.
 
 The BPM Suite cartridge in the Partner Demo system is configured to use the Quartz based timer configuration, but uses a RAM based persistence store, which is also volatile in nature.
 
-If you want to upgrade to a JDBC based persistence store, please follow the steps outlined in link:persistent_timer.adoc[BPM Suite Persistent Timer Setup].
+If you want to upgrade to a JDBC based persistence store, please follow the steps outlined in link:bpm_persistent_timer.adoc[BPM Suite Persistent Timer Setup].
 
 === BPM Suite 6 : Notification mail subsystem setup
 
@@ -332,12 +337,12 @@ The userId to use is:  `jboss`  and the password to use is:  `brms`
 . Under `Organizational Unit Manager`, select the `Add` button
 . Enter a name of _gpe_ and an owner of _jboss_. Click `OK`
 . Clone this bpm_ut_escalation repository in BPM Suite 6
-.. Select `Repositories` -> `Clone Repository` .  
+.. Select `Repositories` -> `Clone Repository` .
 .. Populate the _Clone Repository_ box as follows and then click _Clone_ :
 
 image::images/clone_repo.png[width="420"]
 
-Enter _utescalation_ as the value of the _repository name_.  
+Enter _utescalation_ as the value of the _repository name_.
 The value of _Git URL_ is the URL to this reference architecture in github:
 
 -----
@@ -380,16 +385,16 @@ To test out User Task reassignment:
 image:images/reassignment-process-start.png[]
 
 . The values as seen in the screenshot will allocate the User Task to group _group1_. If the task is not started within 3 minutes after task creation, the task will be reassigned to group _group2_. If the task has no been completed within 6 minutes, it will be reassigned to group _group3_. +
-For this example to work correctly you provide at least one user or group for assignment, reassignment when not started and reassignent when not completed. An expiry delay for not started and not completed should also be provided. 
+For this example to work correctly you provide at least one user or group for assignment, reassignment when not started and reassignent when not completed. An expiry delay for not started and not completed should also be provided.
 . Click the _Play_ button on the bottom of the form.
 
-You can now verify the behavior of User Task reassignment by logging out of BPM Central and logging in again as one of the users of _group1_, _group2_ or _group3_. Depending on the state of the User Task and the time after User task creation, tasks will appear or disappear in the Task list. 
+You can now verify the behavior of User Task reassignment by logging out of BPM Central and logging in again as one of the users of _group1_, _group2_ or _group3_. Depending on the state of the User Task and the time after User task creation, tasks will appear or disappear in the Task list.
 
 === Testing User Task notification
 
 The 'ut_notification' process can be used to test out User Task notification. This is also a simple process definition with only one User Task node. The process takes a number of process variables for dynamically assigning the User Task and configuring notification.
 
-To test out User Task reassignment:
+To test out User Task notification:
 
 . Log in into BPM Central using the `jboss/brms` username, password.
 . In the `BPM Console`, navigate to `Process Management -> Process Definitions`.
@@ -399,9 +404,8 @@ To test out User Task reassignment:
 image:images/notification-process-start.png[]
 
 . The values as seen in the screenshot will allocate the User Task to group _group1_. If the task is not started within 3 minutes after task creation, a notification email will be sent to _group1_. If the task has no been completed within 6 minutes, a second notification email will be sent to _group1_ +
-For this example to work correctly you need to provide at least one user or group for assignment, notification when not started and notification when not completed. An expiry delay for not started and not completed should also be provided. 
+For this example to work correctly you need to provide at least one user or group for assignment, notification when not started and notification when not completed. An expiry delay for not started and not completed should also be provided.
 . Click the _Play_ button on the bottom of the form.
 
 You can now verify the behavior of User Task notification by checking the mailboxes of the users as configured in the `userinfo.properties` file. +
-Please note that apart from the users or groups configured in the notification configuration, Business Administrators will also receive a notification email. If not explicitly set as part of the User task definitions, Business Administrators include the _Administrator_ user, and the _Administrators_ group. In our test setup, we hasve defined a user `busadmin` member of the Administrators group, so this user will receive all notification emails. 
- 
+Please note that apart from the users or groups configured in the notification configuration, Business Administrators will also receive a notification email. If not explicitly set as part of the User task definitions, Business Administrators include the _Administrator_ user, and the _Administrators_ group. In our test setup, we have defined a user `busadmin` member of the Administrators group, so this user will receive all notification emails.
