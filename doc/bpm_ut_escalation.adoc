@@ -285,10 +285,11 @@ $ gear start
 
 As mentioned above, _Users_ and _Groups_ are abstract entities in BPM Suite. This means that BPM suite does not maintain data about users and groups, but these are obtained from an external source, like a LDAP directory. The advantage of this approach is that user and group information does not need to be duplicated inside BPM Suite. +
 BPM Suite obtains the required user and group information through the use of _callbacks_, which are implementations of the `org.kie.api.task.UserGroupCallback` and `org.kie.internal.task.api.UserInfo` interfaces. +
-It is up to the developer to provide an implementation of these interfaces to bridge between BPMS Suite and the user information store they want to leverage. +
-BPM Suite provides a out of the box number of implementations, for use with LDAP or RDBMS based user stores.
+The implementations of the `org.kie.api.task.UserGroupCallback` and `org.kie.internal.task.api.UserInfo` used within BPM Suite are obtained through a _CDI Producer class_, configured in `/business-central.war/WEB-INF/beans.xml`. +
+It is up to the developer to provide an implementation of these interfaces and the Producer class to bridge between BPMS Suite and the user information store they want to leverage. +
+BPM Suite provides a number of implementations out of the box, for use with LDAP or RDBMS based user stores.
 
-By default BPM Suite uses properties files to obtain user and group information. Users and groups are defined in `application-users.properties` and `application-roles.properties`. Additional user information (like email address) is kept in another property file, `userinfo.properties`, in `/business-central.war/WEB-INF/classes`.
+The default implementations in BPM Suite use properties files to obtain user and group information. Users and groups are defined in `application-users.properties` and `application-roles.properties`. Additional user information (like email address) is kept in another property file, `userinfo.properties`, in `/business-central.war/WEB-INF/classes`.
 
 The `userinfo.properties` file has entries in the format :
 
